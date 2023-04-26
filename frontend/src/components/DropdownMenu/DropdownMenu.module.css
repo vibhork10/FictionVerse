@@ -1,0 +1,40 @@
+.dropdownMenu {
+  display: inline-block;
+  position: relative;
+}
+
+.dropdown {
+  appearance: none;
+  background-color: #fff;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  padding: 10px 40px 10px 16px;
+  transition: all 0.2s ease-in-out;
+  width: 200px;
+  font-family: var(--font-family);
+  color: var(--text-color);
+}
+
+.dropdown:focus {
+  border-color: var(--primary-color);
+}
+
+.dropdown:focus::placeholder {
+  color: transparent;
+}
+
+.dropdown::placeholder {
+  color: var(--text-color);
+}
+
+.dropdownMenu::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+  border-top-color: var(--text-color);
+}

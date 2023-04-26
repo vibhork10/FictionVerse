@@ -1,0 +1,29 @@
+.textField {
+  appearance: none;
+  background-color: #fff;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  padding: 10px 16px;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  font-family: var(--font-family);
+  color: var(--text-color);
+}
+
+.textField:focus {
+  border-color: var(--primary-color);
+}
+
+.textField:focus::placeholder {
+  color: transparent;
+}
+
+.textField::placeholder {
+  color: var(--text-color);
+}
+
+.textArea {
+  height: 100%;
+  resize: none;
+}

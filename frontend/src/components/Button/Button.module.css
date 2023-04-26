@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  border: 2px solid var(--primary-color);
+  background-color: var(--primary-color);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  font-family: var(--font-family);
+}
+
+.button:hover,
+.button:focus {
+  background-color: var(--primary-light-color);
+  border-color: var(--primary-light-color);
+}
+
+.button:active {
+  background-color: var(--primary-dark-color);
+  border-color: var(--primary-dark-color);
+}
+
+.button--secondary {
+  border-color: var(--secondary-color);
+  background-color: transparent;
+  color: var(--secondary-color);
+}
+
+.button--secondary:hover,
+.button--secondary:focus {
+  background-color: var(--secondary-light-color);
+  border-color: var(--secondary-light-color);
+  color: #fff;
+}
+
+.button--secondary:active {
+  background-color: var(--secondary-dark-color);
+  border-color: var(--secondary-dark-color);
+  color: #fff;
+}
+
+
+.button--error {
+  border-color: var(--error-color);
+  background-color: var(--error-color);
+  color: #fff;
+}
+
+.button--error:hover,
+.button--error:focus {
+  background-color: var(--error-light-color);
+  border-color: var(--error-light-color);
+}
+
+.button--error:active {
+  background-color: var(--error-dark-color);
+  border-color: var(--error-dark-color);
+}
