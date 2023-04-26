@@ -35,6 +35,12 @@ ftfy
 accelerate
 gradio
 openai
+diffusers==0.10.2 
+transformers 
+scipy 
+ftfy 
+accelerate
+openai
 git+https://github.com/cloneofsimo/lora.git
 git+https://github.com/huggingface/transformers
 

@@ -3,11 +3,37 @@ import styles from './StoryWriting.module.css';
 import DropdownMenu from '../../components/DropdownMenu/DropdownMenu';
 import TextField from '../../components/TextField/TextField';
 import Button from '../../components/Button/Button';
+import axios from 'axios'; // Import Axios
+import LinearProgress from '@material-ui/core/LinearProgress';
+import { makeStyles } from '@material-ui/core/styles';
+
+const useStyles = makeStyles(() => ({
+  progressBar: {
+    width: '100%',
+    marginTop: 10,
+  },
+}));
 
 function StoryWriting() {
   const [genre, setGenre] = useState('');
   const [story, setStory] = useState('');
   const [rows, setRows] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const classes = useStyles(); 
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    const data = {
+      "genre": genre,
+      "user_input": story.toString() 
+    };
+
+    
+    const response = await axios.post('http://127.0.0.1:8000/generate_story', data);
+    setStory(response.data.story);
+    
+    setLoading(false);
+  };
 
   useEffect(() => {
     const calculateRows = () => {
@@ -51,7 +77,12 @@ function StoryWriting() {
             { value: '', label: 'Select a genre' },
             { value: 'horror', label: 'Horror' },
             { value: 'comedy', label: 'Comedy' },
-            { value: 'thriller', label: 'Thriller' }
+            { value: 'thriller', label: 'Thriller'},
+            { value: 'mystery', label: 'Mystery' },
+            { value: 'historical_fiction', label: 'Historical Fiction'},
+            { value: 'adventure', label: 'Adventure'},
+            { value: 'science_fiction', label: 'Sci-fi'},
+            { value: 'fantasy', label: 'Fantasy'}
           ]}
           value={genre}
           onChange={handleGenreChange}
@@ -68,13 +99,18 @@ function StoryWriting() {
       </div>
       <div className={styles.buttonContainer}>
         <div className={styles.buttonLeft}>
-          <Button text="Generate" />
+          <Button text="Generate" onClick={handleSubmit}/>
         </div>
         <div className={styles.buttonRight}>
           <Button text="Clear" color="--error-color" onClick={handleClearClick} />
           <Button text="Submit" onClick={handleSubmitClick} />
         </div>
       </div>
+      {loading && (
+      <div className={classes.progressBar}>
+        <LinearProgress />
+      </div>
+    )}
     </div>
   );
 }
