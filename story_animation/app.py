@@ -172,7 +172,7 @@ def draw_thick_polygon(draw, points, outline, fill, thickness):
     # Draw the outline by creating lines between each point
     for i in range(len(points)):
         draw.line([points[i-1], points[i]], fill=outline, width=thickness)
-def textwitimage_v6(text, image, font_size=15, font_path="/content/comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
+def textwitimage_v6(text, image, font_size=15, font_path="comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
     # Convert the image from OpenCV's BGR format to PIL's RGB format
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image = Image.fromarray(image)
