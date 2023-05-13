@@ -4,22 +4,21 @@ import DropdownMenu from '../../components/DropdownMenu/DropdownMenu';
 import TextField from '../../components/TextField/TextField';
 import Button from '../../components/Button/Button';
 import axios from 'axios'; // Import Axios
-import LinearProgress from '@material-ui/core/LinearProgress';
-import { makeStyles } from '@material-ui/core/styles';
+import LinearProgress from '@mui/material/LinearProgress';
+import { styled } from '@mui/system';
 
-const useStyles = makeStyles(() => ({
-  progressBar: {
-    width: '100%',
-    marginTop: 10,
-  },
-}));
+const ProgressBarContainer = styled('div')({
+  width: '100%',
+  marginTop: 10,
+});
 
-function StoryWriting() {
-  const [genre, setGenre] = useState('');
-  const [story, setStory] = useState('');
+
+function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, setStory, genre, setGenre }) {
+  // const [genre, setGenre] = useState('');
+  // const [story, setStory] = useState('');
   const [rows, setRows] = useState(10);
   const [loading, setLoading] = useState(false);
-  const classes = useStyles(); 
+
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -66,6 +65,8 @@ function StoryWriting() {
 
   const handleSubmitClick = () => {
     // submit the story
+    setGeneratedStory(story);
+    switchToImageGenerationTab();
     console.log("Redirecting to the Image Generation Page!");
   };
 
@@ -107,9 +108,9 @@ function StoryWriting() {
         </div>
       </div>
       {loading && (
-      <div className={classes.progressBar}>
+      <ProgressBarContainer>
         <LinearProgress />
-      </div>
+      </ProgressBarContainer>
     )}
     </div>
   );
