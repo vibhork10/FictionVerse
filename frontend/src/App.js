@@ -22,7 +22,7 @@ function App() {
   const [prompt, setPrompt] = useState('');
   const [story, setStory] = useState('');
   const [genre, setGenre] = useState('');
-  const [currentLine, setCurrentLine] = useState('Empty');
+  const [currentLine, setCurrentLine] = useState('Empty line');
   const [currentCount, setCurrentCount] = useState(0);
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   const [choice, setChoice] = useState({

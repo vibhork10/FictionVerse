@@ -8,6 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import CircularProgress from '@mui/material/CircularProgress';
 // import LinearProgress from '@mui/material/LinearProgress';
 
+import comic1 from '../../Assets/style_1.png';
+import comic2 from '../../Assets/style_2.png';
 import image1 from '../../Assets/midjourney.png';
 import image2 from '../../Assets/anything-v4.0.png';
 import image3 from '../../Assets/andreasrocha_artstyle.png';
@@ -174,8 +176,9 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
             />
             <CustomDropdown
               options={[
-                { value: 'Comic-Style', label: 'Comic style-1', icon: image10},
-                { value: 'default-style', label: 'Comic style-2', icon: image9},
+                { value: 'default-style', label: 'Default-style', icon: image9},
+                { value: 'Style-1', label: 'Comic style-1', icon: comic2},
+                { value: 'Style-2', label: 'Comic style-2', icon: image10},
               ]}
               value={nwstyle}
               onChange={handleStyleChange}

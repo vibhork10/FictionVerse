@@ -133,7 +133,7 @@ def draw_thick_polygon(draw, points, outline, fill, thickness):
     # Draw the outline by creating lines between each point
     for i in range(len(points)):
         draw.line([points[i-1], points[i]], fill=outline, width=thickness)
-        
+
 def textwitimage_v6(text, image, font_size=15, font_path="comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
     # Convert the image from OpenCV's BGR format to PIL's RGB format
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -192,5 +192,131 @@ def textwitimage_v6(text, image, font_size=15, font_path="comic.ttf", spacing=1.
     # Add border and round corners
     new_border = int(10)
     rounded_image = cv2.copyMakeBorder(concatenated_image, 0, new_border, new_border, new_border, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+    # rounded_image
+    return rounded_image
+def textwitimage_v1(text, image, font_size=15, font_path="comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
+    # Convert the image from OpenCV's BGR format to PIL's RGB format
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(image)
+    img_width, img_height = image.size
+
+    # Define the dimensions of the text field and the size of the font
+    width = img_width
+    height = img_height // 8
+
+    # Define the slant factor
+    slant = 15
+
+    # Create a white image with the desired dimensions
+    dialog_img = Image.new('RGB', (width + slant, height), (0, 0, 0))
+
+    # Draw the parallelogram shape on the image
+    draw = ImageDraw.Draw(dialog_img)
+    points = [(0, height), (width, height), (width + slant, 0), (slant, 0)]
+    draw_thick_polygon(draw, points, outline=(0, 0, 0), fill=(255, 255, 255), thickness=border_thickness)
+
+    # Add the text to the cropped text field
+    font = ImageFont.truetype(font_path, font_size)
+    wrapped_lines = wrap_text_pil(text, width - 2 * slant, font)
+    text_y = (height - font_size * len(wrapped_lines)) // 2
+    text_offset_x = slant // 2  # Add an offset to move the text away from the edges
+    text_offset_y = 5  # Add an offset to move the text away from the edges
+    for line in wrapped_lines:
+        text_size = font.getsize(line)
+        text_x = (width - text_size[0]) // 2 + text_offset_x
+        draw.text((text_x, text_y + text_offset_y), line, font=font, fill=(0, 0, 0))
+        text_y += font_size
+
+    # Convert the dialogue image back to OpenCV's BGR format
+    dialog_img = np.array(dialog_img)
+    dialog_img = cv2.cvtColor(dialog_img, cv2.COLOR_RGB2BGR)
+
+    # Resize the dialog_img to match the width of img
+    dialog_img = cv2.resize(dialog_img, (img_width, height))
+
+    # Calculate the overlap
+    overlap = int(height * 0.8)
+    image = np.array(image)
+    image_overlap = image[:overlap, :, :]
+    dialog_overlap = dialog_img[-overlap:, :, :]
+
+    # Blend the overlapping region using addWeighted
+    blended_overlap = cv2.addWeighted(dialog_overlap, 1.3, image_overlap, 0.0, 0)
+
+    # Replace the overlapping region in the dialog image with the blended region
+    dialog_img[-overlap:, :, :] = blended_overlap
+
+    # Combine the dialog image and the original image
+    concatenated_image = np.vstack((dialog_img, image[overlap:, :, :]))
+
+    # Add border and round corners
+    new_border = int(10)
+    rounded_image = cv2.copyMakeBorder(concatenated_image, 0, new_border, new_border, new_border, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+    # rounded_image
+    return rounded_image
+def textwitimage_v2(text, image, font_size=15, font_path="comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
+    # Convert the image from OpenCV's BGR format to PIL's RGB format
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(image)
+    img_width, img_height = image.size
+
+    # Define the dimensions of the text field and the size of the font
+    width_factor = 1.2  # Change this to your needs
+    width = int(img_width * width_factor)
+    height = img_height // 8
+
+
+    # Define the slant factor
+    slant = 15
+
+    # Create a black image with the desired dimensions
+    dialog_img = Image.new('RGB', (width + slant, height), (0, 0, 0))
+
+    # Draw the parallelogram shape on the image
+    draw = ImageDraw.Draw(dialog_img)
+    points = [(0, height), (width, height), (width + slant, 0), (slant, 0)]
+    draw_thick_polygon(draw, points, outline=(0, 0, 0), fill=(255, 255, 255), thickness=border_thickness)
+
+    # Add the text to the cropped text field
+    font = ImageFont.truetype(font_path, font_size)
+    wrapped_lines = wrap_text_pil(text, width - 2 * slant, font)
+    text_y = (height - font_size * len(wrapped_lines)) // 2
+    text_offset_x = slant // 2  # Add an offset to move the text away from the edges
+    text_offset_y = 5  # Add an offset to move the text away from the edges
+    for line in wrapped_lines:
+        text_size = font.getsize(line)
+        text_x = (width - text_size[0]) // 2 + text_offset_x
+        draw.text((text_x, text_y + text_offset_y), line, font=font, fill=(0, 0, 0))
+        text_y += font_size
+
+    # Convert the dialogue image back to OpenCV's BGR format
+    dialog_img = np.array(dialog_img)
+    dialog_img = cv2.cvtColor(dialog_img, cv2.COLOR_RGB2BGR)
+
+    # Resize the dialog_img to match the new width
+    dialog_img = cv2.resize(dialog_img, (width, height))
+
+    # Convert the PIL Image object to a NumPy array and then resize
+    image = np.array(image)
+    image = cv2.resize(image, (width, img_height))
+
+    # Calculate the overlap
+    overlap = int(height * 0.8)
+    image_overlap = image[:overlap, :, :]
+    dialog_overlap = dialog_img[-overlap:, :, :]
+
+    # Blend the overlapping region using addWeighted
+    blended_overlap = cv2.addWeighted(dialog_overlap, 1.3, image_overlap, 0.0, 0)
+
+
+    # Replace the overlapping region in the dialog image with the blended region
+    dialog_img[-overlap:, :, :] = blended_overlap
+
+    # Combine the dialog image and the original image
+    concatenated_image = np.vstack((dialog_img, image[overlap:, :, :]))
+
+    # Add border and round corners
+    new_border = int(10)
+    rounded_image = cv2.copyMakeBorder(concatenated_image, 0, new_border, new_border, new_border, cv2.BORDER_CONSTANT, value=(0, 0, 0))
     # rounded_image
     return rounded_image

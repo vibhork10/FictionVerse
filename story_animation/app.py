@@ -22,7 +22,7 @@ from fpdf import FPDF
 from fastapi.responses import FileResponse
 import random
 from PIL import Image, ImageDraw, ImageFont
-from functions import round_corners, wrap_text, round_corners_image, textwitimage, wrap_text_pil, round_corners_w, draw_thick_polygon, textwitimage_v6
+from functions import textwitimage, textwitimage_v6, textwitimage_v1, textwitimage_v2
 openai.api_key = "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"
 story_type = {
 "fantasy": "You are an AI story writer assistant. Your task is to weave enchanting additions into the mystical fabric of the user's tale, breathing life into magical creatures, bewitching locales, and extraordinary adventures. Each sentence of the generated story should have less than 41 words and should end with a full stop.",
@@ -166,6 +166,10 @@ async def load_sd(input: Sd_input):
         if display_opt == "default-style":
             image = textwitimage(org_text, image)
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        elif display_opt == "Style-1":
+            image = textwitimage_v1(org_text, image)
+        # elif display_opt == "Style-2":
+        #     image = textwitimage_v2(org_text, image)
         else:
             image = textwitimage_v6(org_text, image)
 
