@@ -5,6 +5,7 @@ import TextField from '../../components/TextField/TextField';
 import Button from '../../components/Button/Button';
 import axios from 'axios'; // Import Axios
 import LinearProgress from '@mui/material/LinearProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/system';
 
 const ProgressBarContainer = styled('div')({
@@ -13,25 +14,41 @@ const ProgressBarContainer = styled('div')({
 });
 
 
-function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, setStory, genre, setGenre }) {
+function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, setStory, genre, setGenre, errorMessage, setErrorMessage, storyloading, setstoryLoading}) {
   // const [genre, setGenre] = useState('');
   // const [story, setStory] = useState('');
+  // const [errorMessage, setErrorMessage] = useState(null);
   const [rows, setRows] = useState(10);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
 
 
   const handleSubmit = async () => {
-    setLoading(true);
+    setstoryLoading(true);
+    setErrorMessage(null);
     const data = {
       "genre": genre,
       "user_input": story.toString() 
     };
 
     
-    const response = await axios.post('http://127.0.0.1:8000/generate_story', data);
-    setStory(response.data.story);
-    
-    setLoading(false);
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/generate_story', data);
+
+      if (response.data.story) {
+        setStory(response.data.story);
+        setstoryLoading(true);
+      } else {
+        // set error message for negative response
+        setErrorMessage('Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.');
+        setstoryLoading(false);
+      }
+    } catch (error) {
+      // set error message for error response
+      setErrorMessage('Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.');
+      setstoryLoading(false);
+    } finally {
+      setstoryLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -78,7 +95,6 @@ function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, set
             { value: '', label: 'Select a genre' },
             { value: 'horror', label: 'Horror' },
             { value: 'comedy', label: 'Comedy' },
-            { value: 'thriller', label: 'Thriller'},
             { value: 'mystery', label: 'Mystery' },
             { value: 'historical_fiction', label: 'Historical Fiction'},
             { value: 'adventure', label: 'Adventure'},
@@ -100,18 +116,20 @@ function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, set
       </div>
       <div className={styles.buttonContainer}>
         <div className={styles.buttonLeft}>
-          <Button text="Generate" onClick={handleSubmit}/>
+          <Button text={storyloading ? "Generating..." : "Generate"} onClick={handleSubmit} >
+            {storyloading && <CircularProgress size={24} color="inherit" />}
+          </Button>
         </div>
         <div className={styles.buttonRight}>
           <Button text="Clear" color="--error-color" onClick={handleClearClick} />
           <Button text="Submit" onClick={handleSubmitClick} />
         </div>
       </div>
-      {loading && (
-      <ProgressBarContainer>
-        <LinearProgress />
-      </ProgressBarContainer>
-    )}
+      {errorMessage && (
+        <div className={styles.errorContainer}>
+          <p>{errorMessage}</p>
+        </div>
+      )}
     </div>
   );
 }

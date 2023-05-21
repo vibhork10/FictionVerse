@@ -13,17 +13,14 @@ const TabContainer = styled('div')({
 });
 
 function App() {
-  const [nwuuid, setnwuuID] = useState(uuidv4());
-  const [storyloading, setstoryLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const nwuuid = uuidv4();
   const [tabValue, setTabValue] = useState(0);
   const [generatedStory, setGeneratedStory] = useState('');
   const [prompt, setPrompt] = useState('');
   const [story, setStory] = useState('');
   const [genre, setGenre] = useState('');
-  const [currentLine, setCurrentLine] = useState('Empty');
-  const [currentCount, setCurrentCount] = useState(0);
+  const [currentLine, setCurrentLine] = useState('');
+  const [currentCount, setCurrentCount] = useState(1);
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   const [choice, setChoice] = useState({
     value: 'prompthero/openjourney-v4',
@@ -57,10 +54,6 @@ function App() {
               setStory={setStory}
               genre={genre}
               setGenre={setGenre}
-              errorMessage={errorMessage}
-              setErrorMessage={setErrorMessage}
-              storyloading={storyloading}
-              setstoryLoading={setstoryLoading}
             />
           )}
         </div>
@@ -81,9 +74,6 @@ function App() {
             nwstyle={nwstyle}
             setstyle={setstyle}
             nwuuid={nwuuid}
-            setnwuuID={setnwuuID}
-            loading={loading}
-            setLoading={setLoading}
           />}
         </div>
       </TabContainer>

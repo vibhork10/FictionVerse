@@ -1,255 +1,196 @@
 
-import torch
-import cv2
-import os
 import numpy as np
-import cv2
-import subprocess
-from zipfile import ZipFile 
-import os
-import zipfile
-import os
+from safetensors import safe_open
 from diffusers import StableDiffusionPipeline,DPMSolverMultistepScheduler
-import re
 import os
 import openai
-import gradio as gr
+# from functions import generate_story, next_line, prev_line, load_sd
+from pathlib import Path
+from fastapi import FastAPI, HTTPException
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+import cv2
+import os
+from fastapi import FastAPI
+from pydantic import BaseModel
+import requests
+import cv2
+from fastapi.middleware.cors import CORSMiddleware
+import torch
+from fastapi.staticfiles import StaticFiles
+from fpdf import FPDF
+from fastapi.responses import FileResponse
+import random
+from PIL import Image, ImageDraw, ImageFont
 
-openai.api_key = "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"
+def round_corners(image, radius):
+    height, width, channels = image.shape
 
-story_type = {
-    "fantasy": "You are an AI story writer assistant. You have to add a few lines to the story which the user has written.",
-    "science_fiction": "You are an AI story writer assistant. You have to add a few lines to the science fiction story which the user has written.",
-    "mystery": "You are an AI story writer assistant. You have to add a few lines to the mystery story which the user has written.",
-    "romance": "You are an AI story writer assistant. You have to add a few lines to the romance story which the user has written.",
-    "historical_fiction": "You are an AI story writer assistant. You have to add a few lines to the historical fiction story which the user has written.",
-    "horror": "You are an AI story writer assistant. You have to add a few lines to the horror story which the user has written.",
-    "adventure": "You are an AI story writer assistant. You have to add a few lines to the adventure story which the user has written.",
-    "comedy": "You are an AI story writer assistant. You have to add a few lines to the comedy story which the user has written.",
-    "None":"",
-}
+    # Create a mask with the same dimensions and channels as the image and rounded corners
+    #mask = np.zeros((height, width, 4), dtype=np.uint8)
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.rectangle(mask, (radius, 0), (width - radius, height), 255, -1)
+    cv2.rectangle(mask, (0, radius), (width, height - radius), 255, -1)
+    cv2.circle(mask, (radius, radius), radius, 255, -1)
+    cv2.circle(mask, (width - radius, radius), radius, 255, -1)
+    cv2.circle(mask, (radius, height - radius), radius, 255, -1)
+    cv2.circle(mask, (width - radius, height - radius), radius, 255, -1)
 
-model_name = "gpt-3.5-turbo"
+    if channels == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
 
-def generate_story(genre, user_input):
-    if genre != "None":
-      mymessages = [{"role": "system", "content": story_type[genre]}]
-      mymessages.append({"role": "user", "content": user_input})
+    alpha = np.zeros_like(mask, dtype=np.uint8)
+    alpha[mask == 255] = 255
+    image[:, :, 3] = alpha
 
-      response = openai.ChatCompletion.create(
-          model=model_name,
-          messages=mymessages
-      )
+    return image
+def wrap_text(text, width, font, font_scale,thickness=1):
+    words = text.split()
+    wrapped_lines = []
+    line = []
+    for word in words:
+        line.append(word)
+        (tw, _), _ = cv2.getTextSize(' '.join(line), font, font_scale, thickness)
+        if tw > width:
+            line.pop()
+            wrapped_lines.append(' '.join(line))
+            line = [word]
+    wrapped_lines.append(' '.join(line))
 
-      assistant_output = response['choices'][0]['message']['content']
-      # return user_input + "\n" + assistant_output
-    else:
-      assistant_output = ""
-    return user_input + " " + assistant_output
+    return wrapped_lines
+def round_corners_image(image, radius):
+    height, width, channels = image.shape
+
+    # Create a mask with the same dimensions and channels as the image and rounded corners
+    #mask = np.zeros((height, width, 4), dtype=np.uint8)
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.rectangle(mask, (radius, 0), (width - radius, height), 255, -1)
+    cv2.rectangle(mask, (0, radius), (width, height - radius), 255, -1)
+    cv2.circle(mask, (radius, radius), radius, 255, -1)
+    cv2.circle(mask, (width - radius, radius), radius, 255, -1)
+    cv2.circle(mask, (radius, height - radius), radius, 255, -1)
+    cv2.circle(mask, (width - radius, height - radius), radius, 255, -1)
+
+    if channels == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+
+    image[mask == 0] = [0, 0, 0, 255]
+
+    return image
 
 
-def change_textbox(choice):
-    if choice == "object":
-        return "object"
-    else:
-        return "style"
-
-
-def preview(files, sd: gr.SelectData):
-    print(files)
-    return files[sd.index].name
-import shutil
-
-def save_files(file_location, foldername, progress=gr.Progress(track_tqdm=True)):  
-    file_url = file_location.split("/")[5]
-    filefull= "https://docs.google.com/uc?export=download&confirm=t&id={}".format(file_url)
-    liste = subprocess.run(["wget",filefull, "-O", foldername])
-    with zipfile.ZipFile(foldername, 'r') as zip:
-      zip.extractall('/content/')
-    temp="Folder saved to /content/"+foldername
-    return gr.update(lines=1, visible=True,value=str(temp))
-
-def train_func(input, temp_type, progress=gr.Progress(track_tqdm=True)):
-  input_file = input.split(".")[0]
-  list_dir = subprocess.run(["lora_pti", "--pretrained_model_name_or_path","runwayml/stable-diffusion-v1-5","--instance_data_dir", "/content/"+input_file, \
-                              "--output_dir", "/content/output/", "--train_text_encoder", "--resolution", "512", "--train_batch_size", "1", "--gradient_accumulation_steps", "4", \
-                              "--scale_lr", "--learning_rate_unet", "1e-4", "--learning_rate_text", "5e-5", "--learning_rate_ti", "5e-2", "--color_jitter","--lr_scheduler", "linear", \
-                              "--lr_warmup_steps", "0", "--placeholder_tokens", "<s1>", "--initializer_tokens", "man", "--use_template", temp_type, "--save_steps", "50", "--max_train_steps_ti", \
-                              "1000", "--max_train_steps_tuning", "1000","--perform_inversion", "True", "--clip_ti_decay", "--weight_decay_ti", "0.000", "--weight_decay_lora", "0.001", \
-                              "--continue_inversion", \
-                              "--continue_inversion_lr", \
-                              "--device", "cuda:0", "--lora_rank", "16"], capture_output=True)
-  l = input_file+temp_type
-  return gr.update(lines=1, visible=True,value=str(l))
-
-def textwitimage(text,image):
-  # Load the input image
-  h, w, _ = image.shape
-  print(h,w)
-  # Create a white background image of the same size
-  white_bg = np.full((h, w, 3), 255, dtype=np.uint8)
-
-  # Define the font and font parameters
-  font = cv2.FONT_HERSHEY_SIMPLEX
-  font_thickness = 2
-  font_scale = 1
-
-  # Calculate the maximum width and height of the text box
-  text_box_width = int(0.9 * w)
-  text_box_height = int(0.9 * h)
-
-  # Split the text into words
-  words = text.split()
-
-  # Initialize the lines list with the first word
-  lines = [words[0]]
-  print(lines)
-  # Iterate over the remaining words and add them to lines, splitting lines as necessary
-  for word in words[1:]:
-      # Add the word to the current line
-      line = lines[-1] + ' ' + word
-      print(line)
-      # Get the size of the line
-      line_size, _ = cv2.getTextSize(line, font, font_scale, font_thickness)
-      print(line_size)
-      # If the line is too long, start a new line
-      if line_size[0] > text_box_width:
-          lines.append(word)
-      else:
-          lines[-1] = line
-
-  # Calculate the font size based on the height of the text box
-  font_size = 1
-  # Create a blank image to draw the text on
-  text_image = np.full((text_box_height, text_box_width, 3), 255, dtype=np.uint8)
-
-  # Draw the lines of text on the image, starting at the top
-  text_y = int(0.3*h)
-  for line in lines:
-      line_size, _ = cv2.getTextSize(line, font, font_size, font_thickness)
-      text_x = int((text_box_width - line_size[0]) / 2)
-      cv2.putText(white_bg, line, (text_x, text_y), font, font_size, (0, 0, 0), font_thickness)
-      text_y += line_size[1] + 10*font_size
-
-  # Calculate the position to place the text at the center
-  text_x = (w - text_box_width) // 2
-  text_y = (h - text_box_height) // 2
-
-  # Paste the text image onto the white background
-  #white_bg[text_y:text_y+text_box_height, text_x:text_x+text_box_width, :] = text_image
-
-  # Concatenate the input image and the white background image horizontally
-  concatenated_image = cv2.vconcat([image, white_bg])
-  return concatenated_image
+def textwitimage(text,image,font_size=1,font=cv2.FONT_HERSHEY_SIMPLEX,spacing = 1.5,thickness=1):
   
-def convert_model(artstyle, style, progress=gr.Progress(track_tqdm=True)):
-  output = "/content/output/final_lora.safetensors"
-  # artsyle_loc = "/content/"+artstyle
-  os.makedirs("/content/models_saved", exist_ok=True)
-  os.rename(output, "/content/models_saved/"+str(artstyle)+"_"+str(style)+".safetensors")
-  return gr.update(lines=1, visible=True,value="Conversion has been completed model can be found at /content/models_saved/")
+  wrapped_lines = wrap_text(text, 512, font, font_size, thickness)
+  text_height = int((len(wrapped_lines) - 1) * font_size * spacing * 20 + font_size * 20)
+  margin = int(0.1 * text_height)
 
+  height = text_height + 2 * margin
 
-# def convert_vid(images_list):
-#   result = cv2.VideoWriter('/content/newanimation.mp4', 
-#                           cv2.VideoWriter_fourcc(*'MP4V'),
-#                           2,(512,512))
-#   for img in images_list:
-#     image = img
-#     iamge = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-#     result.write(image)
-#   result.release()
+  blank_image =  np.ones((height, 512, 4), dtype=np.uint8)
 
-def return_value(prompt, image):
-  return prompt, image
+  y = margin + int(font_size * 20)
+  for line in wrapped_lines:
+      (tw, th), _ = cv2.getTextSize(line, font, font_size, thickness)
+      x = (512 - tw) // 2
+      cv2.putText(blank_image, line, (x, y), font, font_size, (255, 255, 255), thickness, cv2.LINE_AA)
+      y += int(th * spacing)
 
+  blank_image = cv2.copyMakeBorder(blank_image, 0, margin, 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
 
-def load_sd(prompt, seed, line_box, org_text, options):        
-  with open("logger.txt", "a") as f:
-    f.write("Prompt "+str(prompt)+"Seed "+str(seed)+"line_box "+str(line_box)+"options "+str(options))                                                                                                                                                                                                                                                                                                                                                                         
-  if options == "1":
-    print("sssssssssssssssssssssssssssss")
-    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)   
-    pipe = pipe.to("cuda")
-    generator = torch.Generator("cuda").manual_seed(int(seed))  
-    image = pipe(prompt, generator = generator, num_inference_steps=50).images[0] 
-    image = np.asarray(image)
-    image = textwitimage(org_text,image)
-    os.makedirs("images", exist_ok=True)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("/images/"+str(line_box)+".png", image)
-  else:
-    input("1111111111111111111111111:")
-    from lora_diffusion import patch_pipe, tune_lora_scale, image_grid    
-    pipe = StableDiffusionPipeline.from_pretrained("runwayml/stable-diffusion-v1-5", torch_dtype=torch.float16)
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)   
-    model_loc= "/models_saved/"+options
-    patch_pipe(pipe,model_loc, patch_text=True,patch_ti=True, patch_unet=True)
-    pipe = pipe.to("cuda")
-    sc = 0.6
-    generator = torch.Generator("cuda").manual_seed(int(seed))
-    tune_lora_scale(pipe.unet, sc)
-    tune_lora_scale(pipe.text_encoder,sc)
-    if options.split("_")[1].split(".")[0] == "style":
-      image = pipe(prompt+", in style of <s1>", generator = generator, num_inference_steps=50).images[0]
-    else:
-      name_variable = "<s1>"
-      prompt = re.sub(r'<(.+?)>', name_variable, prompt)
-      with open("logger.txt", "a") as f:
-        f.write("changed"+prompt)
-      neg = "double face, hands, wrist, Ugly, Duplicate, Extra fingers, Mutated hands, Poorly drawn face, Mutation, Deformed, Blurry, Bad anatomy, Bad proportions, Extra limbs, cloned face, Disfigured, Missing arms, Missing legs, Extra arms, Extra legs, Fused fingers, Too many fingers, Long neck, writing, letters, Multiple bodies, multiple heads, extra hands, extra fingers, ugly, skinny, extra leg, extra foot, blur, bad anatomy, double body, stacked body, fused hands, fused body, fused heads, fused legs, fused feet, multiple faces, conjoined, siamese twin, double faces, two faces, texts, watermarked, watermark, logo, face out of frame, stacked background, out of frame portrait, bucktoothed, cropped, yellow"
-      image = pipe(prompt, negative_prompt=neg, generator = generator, num_inference_steps=50).images[0]
-    image = np.asarray(image)
-    image = textwitimage(org_text,image)
-    os.makedirs("/images/", exist_ok=True)
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    cv2.imwrite("/images/"+str(line_box)+".png", image)
-  
+  img = round_corners_image(image, 50)
+  cv2.imwrite("/content/images/"+str(5)+".png", img)
+  concatenated_image = cv2.vconcat([blank_image,img])
+  new_border = int(10)
+  rounded_image = cv2.copyMakeBorder(concatenated_image, 0, new_border, new_border, new_border, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+  final = round_corners(rounded_image, 50)
+  return final
+def wrap_text_pil(text, width, font):
+    words = text.split()
+    lines = []
+    line = []
+    for word in words:
+        line.append(word)
+        if font.getsize(' '.join(line))[0] > width:
+            line.pop()
+            lines.append(' '.join(line))
+            line = [word]
+    lines.append(' '.join(line))
+    return lines
+def round_corners_w(image, rounding_value):
+    img = cv2.cvtColor(image, cv2.COLOR_BGR2BGRA)
+    mask = np.zeros_like(img)
+    h, w, _ = img.shape
+    cv2.rectangle(mask, (rounding_value, rounding_value), (w - rounding_value, h - rounding_value), (255, 255, 255, 255), -1, cv2.LINE_AA)
+    result = cv2.addWeighted(img, 1, mask, 0, 0)
+    result = cv2.cvtColor(result, cv2.COLOR_BGRA2BGR)
+    return result
+def draw_thick_polygon(draw, points, outline, fill, thickness):
+    # Draw the filled polygon
+    draw.polygon(points, fill=fill)
 
+    # Draw the outline by creating lines between each point
+    for i in range(len(points)):
+        draw.line([points[i-1], points[i]], fill=outline, width=thickness)
+        
+def textwitimage_v6(text, image, font_size=15, font_path="comic.ttf", spacing=1.5, thickness=5, border_thickness=5):
+    # Convert the image from OpenCV's BGR format to PIL's RGB format
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(image)
+    img_width, img_height = image.size
 
-def change_textbox_style(choice):
-    if choice == "object":
-        return "object"
-    else:
-        return "style"
-def create_pdf():
-  from PIL import Image
-  images_list = os.listdir("/content/images/")
-  images_list.sort()
-  images = []
-  img1 = Image.open(os.path.join("/content/images/", images_list[0]))
-  img_1 = img1.convert('RGB')
-  for filename in images_list[1:]:
-      if filename.endswith('.png'):
-          # Open the image file using PIL
-          img = Image.open(os.path.join("/content/images/", filename))
+    # Define the dimensions of the text field and the size of the font
+    width = img_width
+    height = img_height // 8
 
-          # Convert the image to PDF format
-          img_nw = img.convert('RGB')
-          images.append(img_nw)
-  
-  img_1.save('/content/convert.pdf', save_all=True, append_images=images)
-  return "Converted to pdf"
+    # Define the slant factor
+    slant = 15
 
+    # Create a white image with the desired dimensions
+    dialog_img = Image.new('RGB', (width + slant, height), (255, 255, 255))
 
-def next_line(input_text, count):
-  count = int(count)
-  text_lines = input_text.split(".")
-  if count < len(text_lines):
-    new_line = text_lines[count].strip().replace("\n","")
-    count += 1
-    if (len(new_line) != 0):
-      return new_line, count
-  return "Empty line", count+1
+    # Draw the parallelogram shape on the image
+    draw = ImageDraw.Draw(dialog_img)
+    points = [(0, height), (width, height), (width + slant, 0), (slant, 0)]
+    draw_thick_polygon(draw, points, outline=(0, 0, 0), fill=(255, 255, 255), thickness=border_thickness)
 
-def prev_line(input_text, count):
-  count = int(count)
-  text_lines = input_text.split(".")
-  if count < len(text_lines) and count > -1:
-    new_line = text_lines[count].strip().replace("\n","")
-    count -= 1
-    if (len(new_line) != 0):
-      return new_line, count
-  return "Empty line", count-1
+    # Add the text to the cropped text field
+    font = ImageFont.truetype(font_path, font_size)
+    wrapped_lines = wrap_text_pil(text, width - 2 * slant, font)
+    text_y = (height - font_size * len(wrapped_lines)) // 2
+    text_offset_x = slant // 2  # Add an offset to move the text away from the edges
+    text_offset_y = 5  # Add an offset to move the text away from the edges
+    for line in wrapped_lines:
+        text_size = font.getsize(line)
+        text_x = (width - text_size[0]) // 2 + text_offset_x
+        draw.text((text_x, text_y + text_offset_y), line, font=font, fill=(0, 0, 0))
+        text_y += font_size
 
+    # Convert the dialogue image back to OpenCV's BGR format
+    dialog_img = np.array(dialog_img)
+    dialog_img = cv2.cvtColor(dialog_img, cv2.COLOR_RGB2BGR)
+
+    # Resize the dialog_img to match the width of img
+    dialog_img = cv2.resize(dialog_img, (img_width, height))
+
+    # Calculate the overlap
+    overlap = int(height * 0.8)
+    image = np.array(image)
+    image_overlap = image[:overlap, :, :]
+    dialog_overlap = dialog_img[-overlap:, :, :]
+
+    # Blend the overlapping region using addWeighted
+    blended_overlap = cv2.addWeighted(dialog_overlap, 1.3, image_overlap, 0.0, 0)
+
+    # Replace the overlapping region in the dialog image with the blended region
+    dialog_img[-overlap:, :, :] = blended_overlap
+
+    # Combine the dialog image and the original image
+    concatenated_image = np.vstack((dialog_img, image[overlap:, :, :]))
+
+    # Add border and round corners
+    new_border = int(10)
+    rounded_image = cv2.copyMakeBorder(concatenated_image, 0, new_border, new_border, new_border, cv2.BORDER_CONSTANT, value=(255, 255, 255))
+    # rounded_image
+    return rounded_image

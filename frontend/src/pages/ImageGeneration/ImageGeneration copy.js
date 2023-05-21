@@ -4,10 +4,7 @@ import TextField from '../../components/TextField/TextField';
 import Button from '../../components/Button/Button';
 import CustomDropdown from '../../components/DropdownMenu/CustomDropdown';
 import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
 import CircularProgress from '@mui/material/CircularProgress';
-// import LinearProgress from '@mui/material/LinearProgress';
-
 import image1 from '../../Assets/midjourney.png';
 import image2 from '../../Assets/anything-v4.0.png';
 import image3 from '../../Assets/andreasrocha_artstyle.png';
@@ -18,9 +15,9 @@ import image7 from '../../Assets/marioalberti_artstyle.png';
 import image8 from '../../Assets/pepelarraz_artstyle.png';
 import image9 from '../../Assets/default_style.png';
 import image10 from '../../Assets/comicstyle_story.png';
-import image0 from '../../Assets/sd_art.png';
 
-function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCount, setCurrentCount, generatedImageUrl, setGeneratedImageUrl, choice, setChoice, prompt, setPrompt, nwstyle,setstyle, nwuuid,setnwuuID,loading,setLoading}) {
+function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCount, setCurrentCount, generatedImageUrl, setGeneratedImageUrl, choice, setChoice, prompt, setPrompt, nwstyle,setstyle}) {
+  const [loading, setLoading] = useState(false);
  
   const handleNext = async () => {
     setLoading(true);
@@ -71,38 +68,28 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       "line_box": currentCount,
       "org_text": currentLine,
       "style": choice.value,
-      "display":nwstyle.value,
-      "uuid": nwuuid
+      "display":nwstyle.value
     };
   
-    try {
-      const response = await axios.post('http://127.0.0.1:8000/load_sd', data);
-      if (response.data.image === 'done') {
-        const cacheBuster = new Date().getTime();
-        const imageUrl = `http://localhost:8000/${response.data.uuid}_images/${currentCount}.png?${cacheBuster}`;
-        setGeneratedImageUrl(imageUrl); // Uncomment this line
-      } else {
-        console.error('Image generation failed');
-      }
-    } catch (error) {
-      console.error('Image generation failed', error);
-    } finally {
-      setLoading(false);
+    const response = await axios.post('http://127.0.0.1:8000/load_sd', data);
+    if (response.data.image === 'done') {
+      const cacheBuster = new Date().getTime();
+      const imageUrl = `http://localhost:8000/images/${currentCount}.png?${cacheBuster}`;
+      setGeneratedImageUrl(imageUrl); // Uncomment this line
+    } else {
+      console.error('Image generation failed');
     }
+    setLoading(false);
   };
+
   const handleClearClick = () => {
-    setPrompt(''); // clear prompt
-    setChoice('Select Styles'); // clear choice
-    setstyle('Select display type');  // clear style
-    setnwuuID(uuidv4()); // set new UUID
-    setGeneratedImageUrl(''); // clear image
-    setCurrentCount(0); // reset count
-    setCurrentLine(''); // clear current line
+    setPrompt('');
+    setChoice('');
   };
 
   const handleDownloadClick = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/download_pdf?uuid=${nwuuid}`, {
+      const response = await axios.get('http://127.0.0.1:8000/download_pdf', {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -116,7 +103,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       console.error('Error downloading the PDF', error);
     }
   };
-  // console.log(loading);
+  console.log(loading);
   return (
     <div className={styles.imageGeneration}>
       <div className={styles.leftContainer}>
@@ -125,7 +112,6 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
           value={generatedStory}
           multiline
           rows={20}
-          readOnly={true}
         />
       </div>
       <div className={styles.rightContainer}>
@@ -135,7 +121,6 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
             value={currentLine}
             multiline
             rows={1}
-            readOnly={true}
           />
         </div>
         <div className={styles.navigation}>
@@ -144,7 +129,6 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
             placeholder="Line number..."
             type="number"
             value={currentCount}
-            readOnly={true}
           />
           <Button text="Next" onClick={handleNext}/>
         </div>
@@ -159,7 +143,6 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
           <div className={styles.regenerate}>
             <CustomDropdown
               options={[
-                { value: 'runwayml/stable-diffusion-v1-5', label: 'General art', icon: image0},
                 { value: 'ogkalu/Comic-Diffusion-andreasrocha_artstyle', label: 'Comic style-1', icon: image3 },
                 { value: 'ogkalu/Comic-Diffusion-charliebo_artstyle', label: 'Comic style-2', icon: image4 },
                 { value: 'ogkalu/Comic-Diffusion-holliemengert_artstyle', label: 'Comic style-3', icon: image5 },
@@ -183,12 +166,10 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
           </div>
         </div>
         <div className={styles.buttons}>
-          <Button 
-            text={loading ? "Generating..." : "Generate"} 
-            onClick={handleGenerateClick} 
-            disabled={loading}
-          >
-            {loading && <CircularProgress size={24} color="inherit" />}
+          <Button text="Generate" onClick={handleGenerateClick} disabled={loading}>
+            {loading && (
+              <CircularProgress size={24} style={{ marginLeft: 10, color: 'white' }} />
+            )}
           </Button>
           <Button text="Clear" color="--error-color" onClick={handleClearClick} />
         </div>
