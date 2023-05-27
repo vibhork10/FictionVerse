@@ -1,2 +1,2 @@
-python3 -m uvicorn app:app --host 54.157.42.127 --reload
-npm start
+# python3 -m uvicorn app:app --host 0.0.0.0 --reload
+# npm start
