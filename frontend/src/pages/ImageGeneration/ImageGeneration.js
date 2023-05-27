@@ -31,7 +31,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       "count": currentCount
     };
 
-    const response = await axios.post('http://127.0.0.1:8000/next_line', data);
+    const response = await axios.post('http://54.157.42.127:8000/next_line', data);
     setCurrentLine(response.data.line);
     setCurrentCount(response.data.count);
     setLoading(false);
@@ -44,7 +44,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       "count": currentCount - 1
     };
 
-    const response = await axios.post('http://127.0.0.1:8000/prev_line', data);
+    const response = await axios.post('http://54.157.42.127:8000/prev_line', data);
     setCurrentLine(response.data.line);
     setCurrentCount(response.data.count + 1);
     setLoading(false);
@@ -78,10 +78,10 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
     };
   
     try {
-      const response = await axios.post('http://127.0.0.1:8000/load_sd', data);
+      const response = await axios.post('http://54.157.42.127:8000/load_sd', data);
       if (response.data.image === 'done') {
         const cacheBuster = new Date().getTime();
-        const imageUrl = `http://localhost:8000/${response.data.uuid}_images/${currentCount}.png?${cacheBuster}`;
+        const imageUrl = `http://54.157.42.127:8000/${response.data.uuid}_images/${currentCount}.png?${cacheBuster}`;
         setGeneratedImageUrl(imageUrl); // Uncomment this line
       } else {
         console.error('Image generation failed');
@@ -104,7 +104,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
 
   const handleDownloadClick = async () => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/download_pdf?uuid=${nwuuid}`, {
+      const response = await axios.get(`http://54.157.42.127:8000/download_pdf?uuid=${nwuuid}`, {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
