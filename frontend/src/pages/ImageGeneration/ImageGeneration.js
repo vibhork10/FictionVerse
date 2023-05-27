@@ -33,6 +33,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
 
     const response = await axios.post('http://54.157.42.127:8000/next_line', data);
     setCurrentLine(response.data.line);
+    setPrompt(response.data.line);
     setCurrentCount(response.data.count);
     setLoading(false);
   };
@@ -46,6 +47,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
 
     const response = await axios.post('http://54.157.42.127:8000/prev_line', data);
     setCurrentLine(response.data.line);
+    setPrompt(response.data.line);
     setCurrentCount(response.data.count + 1);
     setLoading(false);
   };
