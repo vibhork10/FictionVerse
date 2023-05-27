@@ -23,6 +23,29 @@ from fpdf import FPDF
 from fastapi.responses import FileResponse
 import random
 from PIL import Image, ImageDraw, ImageFont
+from transformers import pipeline, set_seed
+import random
+import re
+
+gpt2_pipe = pipeline('text-generation', model='Gustavosta/MagicPrompt-Stable-Diffusion', tokenizer='gpt2')
+
+
+def generate_prompt(starting_text):
+    seed = random.randint(1000, 10000)
+    set_seed(seed)
+    response = gpt2_pipe(starting_text, max_length=(len(starting_text) + 23), num_return_sequences=1)
+    response_list = []
+    for x in response:
+        resp = x['generated_text'].strip()
+        if resp != starting_text and len(resp) > (len(starting_text) + 4) and resp.endswith((":", "-", "—")) is False:
+            response_list.append(resp+'\n')
+
+    response_end = "\n".join(response_list)
+    response_end = re.sub('[^ ]+\.[^ ]+','', response_end)
+    response_end = response_end.replace("<", "").replace(">", "")
+
+    if response_end != "":
+        return response_end
 
 def round_corners(image, radius):
     height, width, channels = image.shape

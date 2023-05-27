@@ -22,7 +22,7 @@ from fpdf import FPDF
 from fastapi.responses import FileResponse
 import random
 from PIL import Image, ImageDraw, ImageFont
-from functions import textwitimage, textwitimage_v6, textwitimage_v1, textwitimage_v2
+from functions import textwitimage, textwitimage_v6, textwitimage_v1, textwitimage_v2, generate_prompt
 openai.api_key = "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"
 story_type = {
 "fantasy": "You are an AI story writer assistant. Your task is to weave enchanting additions into the mystical fabric of the user's tale, breathing life into magical creatures, bewitching locales, and extraordinary adventures. Each sentence of the generated story should have less than 41 words and should end with a full stop.",
@@ -161,6 +161,8 @@ async def load_sd(input: Sd_input):
         pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
         pipe = pipe.to("cuda")
         generator = torch.Generator("cuda").manual_seed(int(seed))
+        prompt = generate_prompt(prompt)
+        print("promptt generated", prompt)
         image = pipe(prompt, height=512, width=512, generator=generator, num_inference_steps=50).images[0]
         image = np.asarray(image)
         if display_opt == "default-style":
