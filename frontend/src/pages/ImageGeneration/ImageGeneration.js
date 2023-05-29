@@ -22,7 +22,7 @@ import image9 from '../../Assets/default_style.png';
 import image10 from '../../Assets/comicstyle_story.png';
 import image0 from '../../Assets/sd_art.png';
 
-function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCount, setCurrentCount, generatedImageUrl, setGeneratedImageUrl, choice, setChoice, prompt, setPrompt, nwstyle,setstyle, nwuuid,setnwuuID,loading,setLoading}) {
+function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCount, setCurrentCount, generatedImageUrl, setGeneratedImageUrl, choice, setChoice, prompt, setPrompt, nwstyle,setstyle, nwuuid,setnwuuID,loading,setLoading, nwseed, setSeed}) {
  
   const handleNext = async () => {
     setLoading(true);
@@ -76,20 +76,26 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       "org_text": currentLine,
       "style": choice.value,
       "display":nwstyle.value,
-      "uuid": nwuuid
+      "uuid": nwuuid, 
+      "seed": nwseed
     };
   
     try {
       const response = await axios.post('http://127.0.0.1:8000/load_sd', data);
       if (response.data.image === 'done') {
+        setSeed(response.data.seed)
         const cacheBuster = new Date().getTime();
         const imageUrl = `http://localhost:8000/${response.data.uuid}_images/${currentCount}.png?${cacheBuster}`;
         setGeneratedImageUrl(imageUrl); // Uncomment this line
       } else {
-        console.error('Image generation failed');
+        const errorMessage = 'Image generation failed. Please press the generate button again.';
+        alert(errorMessage); // pop-up alert
+        // console.error(errorMessage);
       }
     } catch (error) {
-      console.error('Image generation failed', error);
+        const errorMessage = 'Image generation failed. Please press the generate button again.';
+        alert(errorMessage); // pop-up alert
+      // console.error(errorMessage, error);
     } finally {
       setLoading(false);
     }
@@ -117,6 +123,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       link.click();
       link.parentNode.removeChild(link);
     } catch (error) {
+      alert('Error downloading the PDF, you may not have any generated image. Please generate an image.')
       console.error('Error downloading the PDF', error);
     }
   };

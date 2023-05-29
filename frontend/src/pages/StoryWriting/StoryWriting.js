@@ -4,14 +4,10 @@ import DropdownMenu from '../../components/DropdownMenu/DropdownMenu';
 import TextField from '../../components/TextField/TextField';
 import Button from '../../components/Button/Button';
 import axios from 'axios'; // Import Axios
-import LinearProgress from '@mui/material/LinearProgress';
 import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/system';
 
-const ProgressBarContainer = styled('div')({
-  width: '100%',
-  marginTop: 10,
-});
+
 
 
 function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, setStory, genre, setGenre, errorMessage, setErrorMessage, storyloading, setstoryLoading}) {
@@ -39,12 +35,15 @@ function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, set
         setstoryLoading(true);
       } else {
         // set error message for negative response
-        setErrorMessage('Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.');
+        const errorMessage = 'Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.';
+        alert(errorMessage); // pop-up alert
+        setErrorMessage(errorMessage);
         setstoryLoading(false);
       }
     } catch (error) {
-      // set error message for error response
-      setErrorMessage('Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.');
+      const errorMessage = 'Something went wrong. Please press the Generate Button again or check whether you have selected any genre or have given any input text or not.';
+      alert(errorMessage); // pop-up alert
+      setErrorMessage(errorMessage);
       setstoryLoading(false);
     } finally {
       setstoryLoading(false);
@@ -84,6 +83,7 @@ function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, set
     // submit the story
     setGeneratedStory(story);
     switchToImageGenerationTab();
+    alert("Redirecting to the Image Generation Page!")
     console.log("Redirecting to the Image Generation Page!");
   };
 

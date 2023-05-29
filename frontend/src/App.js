@@ -13,6 +13,7 @@ const TabContainer = styled('div')({
 });
 
 function App() {
+  const [nwseed, setSeed] = useState(12);
   const [nwuuid, setnwuuID] = useState(uuidv4());
   const [storyloading, setstoryLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -84,6 +85,8 @@ function App() {
             setnwuuID={setnwuuID}
             loading={loading}
             setLoading={setLoading}
+            nwseed={nwseed}
+            setSeed={setSeed}
           />}
         </div>
       </TabContainer>
