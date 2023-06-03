@@ -194,7 +194,8 @@ class SdTask:
             pipe = pipe.to("cuda")
             generator = torch.Generator("cuda").manual_seed(int(nwseed))
             prompt = generate_prompt(prompt)
-
+            print("prompttttttttttttt", prompt)
+           
             image = pipe(prompt, height=512, width=512, generator=generator, num_inference_steps=50).images[0]
             image = np.asarray(image)
             if display_opt == "default-style":

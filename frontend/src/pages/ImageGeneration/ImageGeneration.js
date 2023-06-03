@@ -31,13 +31,18 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
       "count": currentCount
     };
 
+
+
+
     const response = await axios.post('http://127.0.0.1:8000/next_line', data);
     setCurrentLine(response.data.line);
     setPrompt(response.data.line);
     setCurrentCount(response.data.count);
     setLoading(false);
   };
-
+  const openForm = () => {
+    window.open("https://docs.google.com/forms/d/e/1FAIpQLScz6hDLB3hBbj0M7HCRQ6aj0Q3hg1JRi5TDIWjIST6Wo8uatA/viewform?usp=sf_link", "_blank");
+  };
   const handlePrev = async () => {
     setLoading(true);
     const data = {
@@ -196,7 +201,7 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
         </div>
         <div className={styles.buttons}>
           <Button 
-            text={loading ? "Generating..." : "Generate"} 
+            text={loading ? "Generating..........." : "Generate"} 
             onClick={handleGenerateClick} 
             disabled={loading}
           >
@@ -209,6 +214,9 @@ function ImageGeneration({generatedStory, currentLine, setCurrentLine, currentCo
         </div>
         <div className={styles.download}>
           <Button text="Download PDF" onClick={handleDownloadClick} />
+          <div>
+            <Button text="Give Feedback" onClick={openForm} />
+          </div>
         </div>
       </div>
     </div>
