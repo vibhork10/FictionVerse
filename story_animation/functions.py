@@ -109,7 +109,7 @@ def textwitimage(text,image,font_size=1,font=cv2.FONT_HERSHEY_SIMPLEX,spacing = 
   text_height = int((len(wrapped_lines) - 1) * font_size * spacing * 20 + font_size * 20)
   margin = int(0.1 * text_height)
 
-  height = text_height + 2 * margin
+  height = text_height + 2 * margin +50
 
   blank_image =  np.ones((height, 512, 4), dtype=np.uint8)
 
