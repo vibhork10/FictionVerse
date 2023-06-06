@@ -28,8 +28,8 @@ function StoryWriting({setGeneratedStory, switchToImageGenerationTab, story, set
 
     
     try {
-      const response = await axios.post('http://127.0.0.1:8000/generate_story', data);
-
+      const response = await axios.post('http://54.157.42.127:8000/generate_story', data);
+      console.log(response.data.story)
       if (response.data.story) {
         setStory(response.data.story);
         setstoryLoading(true);
